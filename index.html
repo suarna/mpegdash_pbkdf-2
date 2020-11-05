@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- Shaka Player compiled library: -->
+        <script type="module" src="./pbkdf-2/bundle.js"></script> 
+        <script src="./shaka-player/dist/shaka-player.compiled.js"></script>
+        <!-- Your application source: -->
+        <script>
+            var player;
+
+            function initApp() {
+                    // Install built-in polyfills to patch browser incompatibilities.
+                shaka.polyfill.installAll();
+
+                // Check to see if the browser supports the basic APIs Shaka needs.
+                if (shaka.Player.isBrowserSupported()) {
+                    // Everything looks good!
+                    player = initPlayer();
+                } else {
+                    // This browser does not have the minimum set of APIs we need.
+                    console.error('Browser not supported!');
+                }
+                
+                var button = document.getElementById('loadButton')
+                button.addEventListener("click",(event) => {
+					
+					//Clear the password and error fields,and destroy the previous player
+					 document.getElementById('error').innerHTML = ''
+					document.getElementById('password').value = '';
+					player.destroy();
+                    //Timeout to compute the derived key
+                    setTimeout(function(){
+					
+					manifest = document.getElementById('videoSelector').value
+                    console.log(video);
+                     
+                    //Statement to load the correct kid 
+                    if(manifest =="ed.mpd"){
+						kid = 'bea0134a060547b39555e9adc2a19e6f';
+						document.getElementById('kid').innerHTML = 'KID:'+kid;
+					}
+					else if(manifest =="popeye.mpd"){
+						kid = 'be445832617eb0b7fcb196b65e81b694';
+						document.getElementById('kid').innerHTML = 'KID:'+kid;
+					}
+					else{
+						kid = 'ea3ddb3fab812f86c70f18fb4fa51873';
+						document.getElementById('kid').innerHTML = 'KID:'+kid;
+					}     
+                    key = document.getElementById('key').value
+                    
+                    console.log(manifest)
+                    console.log(kid)
+                    console.log(key)
+		
+                    player = initPlayer()
+                    loadVideo(player, manifest, kid, key) 
+                    //1'5 seconds of timeout
+                    },1500);  
+                });             
+            }
+            
+            function initPlayer() {
+                // Create a Player instance.
+              
+                var video = document.getElementById('video');
+                var player = new shaka.Player(video);
+                //When the player is initiated the h4 tag that shoes the wrong password message is cleaned
+                document.getElementById('error').innerHTML = '';
+
+                // Attach player to the window to make it easy to access in the JS console.
+                window.player = player;
+
+                // Listen for error events.
+                player.addEventListener('error', onErrorEvent);
+                return player
+            }
+            
+            function loadVideo(player, manifest, kid, key) {
+                player.configure("drm.clearKeys." + kid, key)
+                //player.configure('abr.enabled', false)
+                player.configure({
+				abr: {
+					enabled: false
+					}
+				});
+            
+                // Try to load a manifest.
+                // This is an asynchronous process.
+                player.load(manifest).then(function() {
+                    // This runs if the asynchronous load is successful.
+                    console.log('The video has now been loaded!');
+                    initSelector(player);
+                }).catch(onError);  // onError is executed if the asynchronous load fails.
+                
+                console.log(player.getConfiguration())
+            }
+            
+            function initSelector(player) {
+                var select = document.querySelector('.variantSelector');
+                options = player.getVariantTracks().map(variant => "<option>" + (variant['videoBandwidth'] / 1024) + "</option>").join('\n');
+                console.log(options)
+
+                select.innerHTML = options;
+                select.addEventListener('change', (event) => {
+                    player.selectVariantTrack(player.getVariantTracks()[event.target.selectedIndex], true, 3)
+                })
+            }
+            function clearContent(){
+				 document.getElementById('key').value = '';
+				 document.getElementById('kid').value = '';			 
+			}
+
+            function onErrorEvent(event) {
+                // Extract the shaka.util.Error object from the event.
+                onError(event.detail);
+                document.getElementById('error').innerHTML = 'Wrong password, max two attemps'
+            }
+
+            function onError(error) {
+                // Log the error.
+                console.error('Error code', error.code, 'object', error);    
+            }
+	
+            document.addEventListener('DOMContentLoaded', initApp);
+            document.addEventListener('DOMContentLoaded', clearContent);
+            
+            
+          
+        </script>
+  </head>
+  <body>
+        <div>
+			<label>Select Video:</label>
+			<select id="videoSelector">
+				<option value="ed.mpd">Ed</option>
+				<option value="popeye.mpd">Popeye</option>
+				<option value="sintel.mpd">Sintel</option>
+			</select>
+            <h4 id="kid"></h4>
+            <input id="password" type=password placeholder=password>
+            <input type="hidden" id="key"></input>
+            <button type="button" id="loadButton" name="loadButton">Load</button>   
+            <h4 id="error"></h4>        
+        </div>
+        <div>
+            <label> Select the bitrate: </label>
+            <select class='variantSelector' name="variantSelector"></select>
+            <label> Kb </label>
+        </div>
+        <video id="video"
+               height="720"
+               width="1280"
+               controls autoplay></video>
+  </body>
+</html>
+

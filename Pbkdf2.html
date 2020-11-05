@@ -1,0 +1,22 @@
+<!DOCTYPE HTML>
+<html>
+<head>	
+	<title>Compute pbkdf2</title>
+	
+</head>
+	  
+<body>
+	<form name="data">
+		<fieldset>
+			<legend><strong>Type data to compute PBKDF2</strong></legend>
+			<input id="password" type=password placeholder=password><br>
+			<input id="salt" type=text placeholder=salt><br>
+		</fieldset>
+		<input id="button" type=button value="Compute">
+	</form>
+	<strong><p> Retrieved data:</p></strong>
+	<strong><p id="kid"></p></strong>
+	<strong><p id="key"></p></strong> 
+</body>
+<script type="module" src="./pbkdf-2/bundle_compute.js"></script> 
+</html>
